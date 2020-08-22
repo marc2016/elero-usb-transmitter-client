@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+  - 12.12.0
+
+before_script:
+  - npm run setup
+  - npm run build
+
+script:
+  - echo "skipping tests"
+
+after_success:
+  - npm pack
+
+branches:
+  only:
+    - master
