@@ -10,6 +10,9 @@ import {
   INFO_UNKNOWN,
 } from './domain/constants'
 import { Response } from './model/Response'
+import { promisify } from 'util'
+import { resolve } from 'path'
+import { reject } from 'lodash'
 
 const DEFAULT_BAUDRATE = 38400
 const DEFAULT_BYTESIZE = 8
@@ -25,23 +28,60 @@ export class UsbTransmitterClient {
       dataBits: DEFAULT_BYTESIZE,
       parity: DEFAULT_PARITY,
       stopBits: DEFAULT_STOPBITS,
+      autoOpen: false
     })
-    this.serialPort.open()
   }
 
-  public checkChannels(): number[] {
+  public open(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.serialPort.isOpen) {
+        this.serialPort.open((error) => {
+          if (error) reject(error);
+          this.serialPort.flush((error) => {
+            if (error) reject(error);
+            resolve()
+          })
+        })
+      }
+    })
+  }
+
+  public close(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.serialPort.close((error) => {
+        if (error) reject(error)
+        resolve()
+      })
+    })
+  }
+
+  public async checkChannels(): Promise<number[]> {
     const data = [BYTE_HEADER, BYTE_LENGTH_2, COMMAND_CHECK]
-    this.sendCommand(data)
-    const responseBytes = this.readResponseBytes(RESPONSE_LENGTH_CHECK, 0)
-    const response = this.parseResponse(responseBytes as Buffer)
-    return response.activeChannels
+    await this.sendCommand(data)
+    return new Promise((resolve, reject) => {
+      const that = this
+      this.serialPort.once('readable', function () {
+        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_CHECK, 0)
+        const response = that.parseResponse(responseBytes as Buffer)
+        resolve(response.activeChannels)
+      })
+    })
+
+    // 
+    // return response.activeChannels
+    return [0]
   }
 
-  private sendCommand(data: number[]) {
+  private sendCommand(data: number[]): Promise<number> {
     const checksum = this.calculateChecksum(data)
     data.push(checksum)
-    const bytes = this.createSerialData(data)
-    this.serialPort.write(bytes)
+
+    return new Promise((resolve, reject) => {
+      this.serialPort.write(data, (error, bytesWritten: number) => {
+        if (error) reject(error)
+        resolve(bytesWritten)
+      })
+    })
   }
 
   private readResponseBytes(
