@@ -146,32 +146,4 @@ export class UsbTransmitterClient {
     }
     return response
   }
-  //   var resp_length = ser_resp.length();
-  // 	//Common parts
-  // 	response['header'] = ser_resp[0];
-  // 	response['length'] = ser_resp[1];
-  // 	response['command'] = ser_resp[2];
-  // 	response['ch_h'] = this._get_upper_channel_bits(ser_resp[3]);
-  // 	response['ch_l'] = this._get_lower_channel_bits(ser_resp[4]);
-  // 	response['chs'] = new Set(response['ch_h'] + response['ch_l']);
-  // }
-
-  // private sendCommand(int_list, channel) {
-  //   //Write out a command to the serial port.
-  //   int_list.append(this._calculate_checksum(int_list))
-  //   var bytes_data = this._create_serial_data(int_list)
-  //   this._adapter.log.debug(
-  //     "Elero - transmitter: '" +
-  //       this._serial_number +
-  //       "' ch: '" +
-  //       channel +
-  //       "' serial command: '" +
-  //       bytes_data +
-  //       "'."
-  //   )
-  //   if (!this._serial.isOpen()) {
-  //     this._serial.open()
-  //   }
-  //   this._serial.write(bytes_data)
-  // }
 }
