@@ -8,6 +8,10 @@ import {
   RESPONSE_LENGTH_SEND,
   INFO,
   INFO_UNKNOWN,
+  BYTE_LENGTH_5,
+  COMMAND_INFO,
+  RESPONSE_LENGTH_INFO,
+  BYTE_LENGTH_4,
 } from './domain/constants'
 import { Response } from './model/Response'
 import { promisify } from 'util'
@@ -66,10 +70,23 @@ export class UsbTransmitterClient {
         resolve(response.activeChannels)
       })
     })
+  }
 
-    // 
-    // return response.activeChannels
-    return [0]
+  public async getInfo(channel: number): Promise<Response> {
+
+    let lowChannels = (1 << (channel - 1)) & 0xFF
+    let highChannels = 1 << (channel - 1) >> 8
+
+    const data = [BYTE_HEADER, BYTE_LENGTH_4, COMMAND_INFO, highChannels, lowChannels]
+    await this.sendCommand(data)
+    return new Promise((resolve, reject) => {
+      const that = this
+      this.serialPort.once('readable', function () {
+        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
+        const response = that.parseResponse(responseBytes as Buffer)
+        return resolve(response)
+      })
+    })
   }
 
   private sendCommand(data: number[]): Promise<number> {
