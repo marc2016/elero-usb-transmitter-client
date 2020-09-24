@@ -12,11 +12,13 @@ import {
   COMMAND_INFO,
   RESPONSE_LENGTH_INFO,
   BYTE_LENGTH_4,
+  COMMAND_SEND
 } from './domain/constants'
 import { Response } from './model/Response'
 import { promisify } from 'util'
 import { resolve } from 'path'
 import { reject } from 'lodash'
+import { ControlCommand } from './domain/enums'
 
 const DEFAULT_BAUDRATE = 38400
 const DEFAULT_BYTESIZE = 8
@@ -78,6 +80,22 @@ export class UsbTransmitterClient {
     let highChannels = 1 << (channel - 1) >> 8
 
     const data = [BYTE_HEADER, BYTE_LENGTH_4, COMMAND_INFO, highChannels, lowChannels]
+    await this.sendCommand(data)
+    return new Promise((resolve, reject) => {
+      const that = this
+      this.serialPort.once('readable', function () {
+        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
+        const response = that.parseResponse(responseBytes as Buffer)
+        return resolve(response)
+      })
+    })
+  }
+
+  public async sendControlCommand(channel: number, controlCommand: ControlCommand): Promise<Response> {
+    let lowChannels = (1 << (channel - 1)) & 0xFF
+    let highChannels = 1 << (channel - 1) >> 8
+
+    const data = [BYTE_HEADER, BYTE_LENGTH_5, COMMAND_SEND, highChannels, lowChannels, controlCommand]
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
