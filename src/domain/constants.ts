@@ -32,6 +32,8 @@ export const RESPONSE_LENGTH_INFO: number = 7
 // for Serial error handling
 export const NO_SERIAL_RESPONSE: string = ''
 
+export const EASY_ACK: number = 0x4d
+
 // Playloads to send.
 export const PAYLOAD_STOP: number = 0x10
 export const PAYLOAD_UP: number = 0x20
