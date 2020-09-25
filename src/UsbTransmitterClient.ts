@@ -3,22 +3,14 @@ import * as _ from 'lodash'
 import {
   BYTE_HEADER,
   BYTE_LENGTH_2,
-  COMMAND_CHECK,
   RESPONSE_LENGTH_CHECK,
   RESPONSE_LENGTH_SEND,
-  INFO,
-  INFO_UNKNOWN,
   BYTE_LENGTH_5,
-  COMMAND_INFO,
   RESPONSE_LENGTH_INFO,
-  BYTE_LENGTH_4,
-  COMMAND_SEND
+  BYTE_LENGTH_4
 } from './domain/constants'
 import { Response } from './model/Response'
-import { promisify } from 'util'
-import { resolve } from 'path'
-import { reject } from 'lodash'
-import { ControlCommand } from './domain/enums'
+import { ControlCommand, EasyCommand, InfoData } from './domain/enums'
 
 const DEFAULT_BAUDRATE = 38400
 const DEFAULT_BYTESIZE = 8
@@ -62,7 +54,7 @@ export class UsbTransmitterClient {
   }
 
   public async checkChannels(): Promise<number[]> {
-    const data = [BYTE_HEADER, BYTE_LENGTH_2, COMMAND_CHECK]
+    const data = [BYTE_HEADER, BYTE_LENGTH_2, EasyCommand.EASY_CHECK]
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
@@ -79,7 +71,7 @@ export class UsbTransmitterClient {
     let lowChannels = (1 << (channel - 1)) & 0xFF
     let highChannels = 1 << (channel - 1) >> 8
 
-    const data = [BYTE_HEADER, BYTE_LENGTH_4, COMMAND_INFO, highChannels, lowChannels]
+    const data = [BYTE_HEADER, BYTE_LENGTH_4, EasyCommand.EASY_INFO, highChannels, lowChannels]
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
@@ -95,7 +87,7 @@ export class UsbTransmitterClient {
     let lowChannels = (1 << (channel - 1)) & 0xFF
     let highChannels = 1 << (channel - 1) >> 8
 
-    const data = [BYTE_HEADER, BYTE_LENGTH_5, COMMAND_SEND, highChannels, lowChannels, controlCommand]
+    const data = [BYTE_HEADER, BYTE_LENGTH_5, EasyCommand.EASY_SEND, highChannels, lowChannels, controlCommand]
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
@@ -162,22 +154,21 @@ export class UsbTransmitterClient {
       command: bytes[2],
       activeChannels: activeChannels,
       checksum: -1,
-      status: '',
+      status: null,
       statusCode: -1,
     }
     if (bytes.length == RESPONSE_LENGTH_CHECK) {
       response.checksum = bytes[5]
       //Easy Ack (the answer on Easy Info)
     } else if (bytes.length == RESPONSE_LENGTH_SEND) {
-      if (bytes[5] in INFO) {
-        const tmp = bytes[5]
-        response.status = INFO[bytes[5]]
+      if (bytes[5] in InfoData) {
+        response.status = bytes[5] as InfoData
       } else {
-        response.status = INFO_UNKNOWN
+        response.status = InfoData.INFO_UNKNOWN
       }
       response.checksum = bytes[6]
     } else {
-      response['status'] = INFO_UNKNOWN
+      response.status = InfoData.INFO_UNKNOWN
     }
     return response
   }

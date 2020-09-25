@@ -1,15 +1,17 @@
+import { EasyCommand, InfoData } from "../domain/enums";
+
 export interface Response {
   header: number
 
   length: number
 
-  command: number
+  command: EasyCommand
 
   activeChannels: number[]
 
   checksum: number
 
-  status: string
+  status: InfoData | null
 
   statusCode: number
 }
