@@ -1,5 +1,8 @@
 # elero-usb-transmitter-client
 
+[![npm version](https://img.shields.io/npm/v/elero-usb-transmitter-client.svg?style=flat-square)](https://www.npmjs.com/package/elero-usb-transmitter-client)
+[![build status](https://img.shields.io/travis/marc2016/elero-usb-transmitter-client/master.svg?style=flat-square)](https://travis-ci.org/github/marc2016/elero-usb-transmitter-client)
+
 Elero USB Transmitter Client for node.js to send commands to Elero USB Stick and receive information. This libaray needs Elero Transmitter Stick (https://www.der-sonnenschutz-shop.de/elero-221250001-centero-transmitter-stick.html).
 
 ## Features
