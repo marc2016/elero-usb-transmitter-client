@@ -11,11 +11,14 @@ import {
 } from './domain/constants'
 import { Response } from './model/Response'
 import { ControlCommand, EasyCommand, InfoData } from './domain/enums'
+import {Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout} from 'async-mutex';
 
 const DEFAULT_BAUDRATE = 38400
 const DEFAULT_BYTESIZE = 8
 const DEFAULT_PARITY = 'none'
 const DEFAULT_STOPBITS = 1
+
+const mutex = new Mutex();
 
 export class UsbTransmitterClient {
   serialPort: SerialPort
@@ -55,12 +58,14 @@ export class UsbTransmitterClient {
 
   public async checkChannels(): Promise<number[]> {
     const data = [BYTE_HEADER, BYTE_LENGTH_2, EasyCommand.EASY_CHECK]
+    const release = await mutex.acquire()
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_CHECK, 0)
         const response = that.parseResponse(responseBytes as Buffer)
+        release()
         resolve(response.activeChannels)
       })
     })
@@ -72,12 +77,14 @@ export class UsbTransmitterClient {
     let highChannels = 1 << (channel - 1) >> 8
 
     const data = [BYTE_HEADER, BYTE_LENGTH_4, EasyCommand.EASY_INFO, highChannels, lowChannels]
+    const release = await mutex.acquire()
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
         const response = that.parseResponse(responseBytes as Buffer)
+        release()
         return resolve(response)
       })
     })
@@ -88,12 +95,14 @@ export class UsbTransmitterClient {
     let highChannels = 1 << (channel - 1) >> 8
 
     const data = [BYTE_HEADER, BYTE_LENGTH_5, EasyCommand.EASY_SEND, highChannels, lowChannels, controlCommand]
+    const release = await mutex.acquire()
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
       const that = this
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
         const response = that.parseResponse(responseBytes as Buffer)
+        release()
         return resolve(response)
       })
     })
