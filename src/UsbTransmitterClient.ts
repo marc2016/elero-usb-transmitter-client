@@ -7,18 +7,18 @@ import {
   RESPONSE_LENGTH_SEND,
   BYTE_LENGTH_5,
   RESPONSE_LENGTH_INFO,
-  BYTE_LENGTH_4
+  BYTE_LENGTH_4,
 } from './domain/constants'
 import { Response } from './model/Response'
 import { ControlCommand, EasyCommand, InfoData } from './domain/enums'
-import {Mutex, MutexInterface, Semaphore, SemaphoreInterface, withTimeout} from 'async-mutex';
+import { Mutex } from 'async-mutex'
 
 const DEFAULT_BAUDRATE = 38400
 const DEFAULT_BYTESIZE = 8
 const DEFAULT_PARITY = 'none'
 const DEFAULT_STOPBITS = 1
 
-const mutex = new Mutex();
+const mutex = new Mutex()
 
 export class UsbTransmitterClient {
   serialPort: SerialPort
@@ -29,7 +29,7 @@ export class UsbTransmitterClient {
       dataBits: DEFAULT_BYTESIZE,
       parity: DEFAULT_PARITY,
       stopBits: DEFAULT_STOPBITS,
-      autoOpen: false
+      autoOpen: false,
     })
   }
 
@@ -37,9 +37,9 @@ export class UsbTransmitterClient {
     return new Promise((resolve, reject) => {
       if (!this.serialPort.isOpen) {
         this.serialPort.open((error) => {
-          if (error) reject(error);
+          if (error) reject(error)
           this.serialPort.flush((error) => {
-            if (error) reject(error);
+            if (error) reject(error)
             resolve()
           })
         })
@@ -72,11 +72,16 @@ export class UsbTransmitterClient {
   }
 
   public async getInfo(channel: number): Promise<Response> {
+    let lowChannels = (1 << (channel - 1)) & 0xff
+    let highChannels = (1 << (channel - 1)) >> 8
 
-    let lowChannels = (1 << (channel - 1)) & 0xFF
-    let highChannels = 1 << (channel - 1) >> 8
-
-    const data = [BYTE_HEADER, BYTE_LENGTH_4, EasyCommand.EASY_INFO, highChannels, lowChannels]
+    const data = [
+      BYTE_HEADER,
+      BYTE_LENGTH_4,
+      EasyCommand.EASY_INFO,
+      highChannels,
+      lowChannels,
+    ]
     const release = await mutex.acquire()
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
@@ -90,11 +95,21 @@ export class UsbTransmitterClient {
     })
   }
 
-  public async sendControlCommand(channel: number, controlCommand: ControlCommand): Promise<Response> {
-    let lowChannels = (1 << (channel - 1)) & 0xFF
-    let highChannels = 1 << (channel - 1) >> 8
+  public async sendControlCommand(
+    channel: number,
+    controlCommand: ControlCommand
+  ): Promise<Response> {
+    let lowChannels = (1 << (channel - 1)) & 0xff
+    let highChannels = (1 << (channel - 1)) >> 8
 
-    const data = [BYTE_HEADER, BYTE_LENGTH_5, EasyCommand.EASY_SEND, highChannels, lowChannels, controlCommand]
+    const data = [
+      BYTE_HEADER,
+      BYTE_LENGTH_5,
+      EasyCommand.EASY_SEND,
+      highChannels,
+      lowChannels,
+      controlCommand,
+    ]
     const release = await mutex.acquire()
     await this.sendCommand(data)
     return new Promise((resolve, reject) => {
