@@ -132,9 +132,12 @@ export class UsbTransmitterClient {
     data.push(checksum)
 
     return new Promise((resolve, reject) => {
-      this.serialPort.write(data, (error, bytesWritten: number) => {
+      this.serialPort.flush((error) => {
         if (error) reject(error)
-        resolve(bytesWritten)
+        this.serialPort.write(data, (error, bytesWritten: number) => {
+          if (error) reject(error)
+          resolve(bytesWritten)
+        })
       })
     })
   }
