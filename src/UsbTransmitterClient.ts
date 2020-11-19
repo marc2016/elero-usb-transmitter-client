@@ -88,6 +88,10 @@ export class UsbTransmitterClient {
       const that = this
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
+        if (!responseBytes || responseBytes == null) {
+          release()
+          return reject('responseBytes are null or undefined.')
+        }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
         return resolve(response)
