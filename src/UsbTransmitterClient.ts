@@ -65,11 +65,11 @@ export class UsbTransmitterClient {
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_CHECK)
         if (responseBytes == null) {
-          reject('responseBytes are null.')
+          return reject('responseBytes are null.')
         }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
-        resolve(response.activeChannels)
+        return resolve(response.activeChannels)
       })
     })
   }
@@ -92,7 +92,7 @@ export class UsbTransmitterClient {
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO)
         if (responseBytes == null) {
-          reject('responseBytes are null.')
+          return reject('responseBytes are null.')
         }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
@@ -123,7 +123,7 @@ export class UsbTransmitterClient {
       this.serialPort.once('readable', function () {
         const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO)
         if (responseBytes == null) {
-          reject('responseBytes are null.')
+          return reject('responseBytes are null.')
         }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
