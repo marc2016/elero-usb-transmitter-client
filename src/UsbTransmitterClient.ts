@@ -63,7 +63,10 @@ export class UsbTransmitterClient {
     return new Promise((resolve, reject) => {
       const that = this
       this.serialPort.once('readable', function () {
-        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_CHECK, 0)
+        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_CHECK)
+        if (responseBytes == null) {
+          reject('responseBytes are null.')
+        }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
         resolve(response.activeChannels)
@@ -87,10 +90,9 @@ export class UsbTransmitterClient {
     return new Promise((resolve, reject) => {
       const that = this
       this.serialPort.once('readable', function () {
-        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
-        if (!responseBytes || responseBytes == null) {
-          release()
-          return reject('responseBytes are null or undefined.')
+        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO)
+        if (responseBytes == null) {
+          reject('responseBytes are null.')
         }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
@@ -119,7 +121,10 @@ export class UsbTransmitterClient {
     return new Promise((resolve, reject) => {
       const that = this
       this.serialPort.once('readable', function () {
-        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO, 0)
+        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO)
+        if (responseBytes == null) {
+          reject('responseBytes are null.')
+        }
         const response = that.parseResponse(responseBytes as Buffer)
         release()
         return resolve(response)
@@ -142,10 +147,7 @@ export class UsbTransmitterClient {
     })
   }
 
-  private readResponseBytes(
-    length: number,
-    channel: number
-  ): string | Buffer | null {
+  private readResponseBytes(length: number): string | Buffer | null {
     //Get the serial data from the serial port.
     var response = this.serialPort.read(length)
     return response
@@ -157,11 +159,6 @@ export class UsbTransmitterClient {
     const sum = _.sum(data)
     const result = (256 - sum) % 256
     return result
-  }
-
-  private createSerialData(data: number[]): Buffer {
-    const bytes = Buffer.from(data)
-    return bytes
   }
 
   private getActiveChannels(byte: number, start: number): number[] {
