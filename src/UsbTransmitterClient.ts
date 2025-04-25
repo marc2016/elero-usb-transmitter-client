@@ -1,4 +1,4 @@
-import * as SerialPort from 'serialport'
+import { SerialPort } from 'serialport'
 import * as _ from 'lodash'
 import {
   BYTE_HEADER,
@@ -21,10 +21,11 @@ const DEFAULT_STOPBITS = 1
 const mutex = new Mutex()
 
 export class UsbTransmitterClient {
-  serialPort: SerialPort
+  serialPort: SerialPort<any>
 
   constructor(devPath: string) {
-    this.serialPort = new SerialPort(devPath, {
+    this.serialPort = new SerialPort({
+      path: devPath,
       baudRate: DEFAULT_BAUDRATE,
       dataBits: DEFAULT_BYTESIZE,
       parity: DEFAULT_PARITY,
@@ -142,9 +143,9 @@ export class UsbTransmitterClient {
     return new Promise((resolve, reject) => {
       this.serialPort.flush((error) => {
         if (error) reject(error)
-        this.serialPort.write(data, (error, bytesWritten: number) => {
+        this.serialPort.write(data, (error: Error | null | undefined) => {
           if (error) reject(error)
-          resolve(bytesWritten)
+          resolve(data.length)
         })
       })
     })
