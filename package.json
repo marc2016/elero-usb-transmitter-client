@@ -14,8 +14,8 @@
     "dist"
   ],
   "bin": {
-    "elero-usb-transmitter-client": "./dist/src/cli.js",
-    "elero-cli": "./dist/src/cli.js"
+    "elero-usb-transmitter-client": "dist/src/cli.js",
+    "elero-cli": "dist/src/cli.js"
   },
   "repository": {
     "type": "git",
