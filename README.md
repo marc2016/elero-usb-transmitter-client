@@ -84,6 +84,10 @@ await client.close()
 
 ## Changelog
 
+### 1.1.2
+
+- Fix CLI entry point name in `package.json`
+
 ### 1.1.1
 
 - Fixed `responseBytes are null` error by handling fragmented serial packets
