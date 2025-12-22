@@ -1,5 +1,5 @@
-import { UsbTransmitterClient } from "../src/UsbTransmitterClient"
-import { ControlCommand, EasyCommand, InfoData } from "../src/domain/enums"
+import { UsbTransmitterClient } from '../src/UsbTransmitterClient'
+import { ControlCommand, EasyCommand, InfoData } from '../src/domain/enums'
 import * as fs from 'fs'
 
 jest.setTimeout(200000)
@@ -13,7 +13,6 @@ const aktiveChannelsForTest = [1, 2]
 const describeHardware = fs.existsSync(devPath) ? describe : describe.skip
 
 describeHardware('Integration Tests (Hardware)', () => {
-
   test('checkChannels', async () => {
     await client.open()
     const channels = await client.checkChannels()

@@ -71,8 +71,8 @@ export class UsbTransmitterClient {
   }
 
   public async getInfo(channel: number): Promise<Response> {
-    let lowChannels = (1 << (channel - 1)) & 0xff
-    let highChannels = (1 << (channel - 1)) >> 8
+    const lowChannels = (1 << (channel - 1)) & 0xff
+    const highChannels = (1 << (channel - 1)) >> 8
 
     const data = [
       BYTE_HEADER,
@@ -94,10 +94,10 @@ export class UsbTransmitterClient {
 
   public async sendControlCommand(
     channel: number,
-    controlCommand: ControlCommand
+    controlCommand: ControlCommand,
   ): Promise<Response> {
-    let lowChannels = (1 << (channel - 1)) & 0xff
-    let highChannels = (1 << (channel - 1)) >> 8
+    const lowChannels = (1 << (channel - 1)) & 0xff
+    const highChannels = (1 << (channel - 1)) >> 8
 
     const data = [
       BYTE_HEADER,
@@ -160,7 +160,7 @@ export class UsbTransmitterClient {
 
   private readResponseBytes(length: number): string | Buffer | null {
     //Get the serial data from the serial port.
-    var response = this.serialPort.read(length)
+    const response = this.serialPort.read(length)
     return response
   }
 
@@ -173,7 +173,7 @@ export class UsbTransmitterClient {
   }
 
   private getActiveChannels(byte: number, start: number): number[] {
-    var channels: number[] = new Array()
+    const channels: number[] = []
     for (let i = 0; i < 9; i++) {
       if (((byte >> i) & 1) == 1) {
         const channel = i + start

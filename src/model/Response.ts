@@ -1,4 +1,4 @@
-import { EasyCommand, InfoData } from "../domain/enums";
+import { EasyCommand, InfoData } from '../domain/enums'
 
 export interface Response {
   header: number
