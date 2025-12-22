@@ -84,6 +84,10 @@ await client.close()
 
 ## Changelog
 
+### 1.1.3
+
+- Moved `commander` and `inquirer` to `dependencies` (fix runtime error)
+
 ### 1.1.2
 
 - Fix CLI entry point name in `package.json`
