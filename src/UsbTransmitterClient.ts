@@ -60,20 +60,14 @@ export class UsbTransmitterClient {
   public async checkChannels(): Promise<number[]> {
     const data = [BYTE_HEADER, BYTE_LENGTH_2, EasyCommand.EASY_CHECK]
     const release = await mutex.acquire()
-    await this.sendCommand(data)
-    return new Promise((resolve, reject) => {
-      const that = this
-      this.serialPort.once('readable', function () {
-        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_CHECK)
-        if (responseBytes == null) {
-          release()
-          return reject('responseBytes are null.')
-        }
-        const response = that.parseResponse(responseBytes as Buffer)
-        release()
-        return resolve(response.activeChannels)
-      })
-    })
+    try {
+      await this.sendCommand(data)
+      const responseBytes = await this.waitForResponse(RESPONSE_LENGTH_CHECK)
+      const response = this.parseResponse(responseBytes)
+      return response.activeChannels
+    } finally {
+      release()
+    }
   }
 
   public async getInfo(channel: number): Promise<Response> {
@@ -88,20 +82,14 @@ export class UsbTransmitterClient {
       lowChannels,
     ]
     const release = await mutex.acquire()
-    await this.sendCommand(data)
-    return new Promise((resolve, reject) => {
-      const that = this
-      this.serialPort.once('readable', function () {
-        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO)
-        if (responseBytes == null) {
-          release()
-          return reject('responseBytes are null.')
-        }
-        const response = that.parseResponse(responseBytes as Buffer)
-        release()
-        return resolve(response)
-      })
-    })
+    try {
+      await this.sendCommand(data)
+      const responseBytes = await this.waitForResponse(RESPONSE_LENGTH_INFO)
+      const response = this.parseResponse(responseBytes)
+      return response
+    } finally {
+      release()
+    }
   }
 
   public async sendControlCommand(
@@ -120,19 +108,38 @@ export class UsbTransmitterClient {
       controlCommand,
     ]
     const release = await mutex.acquire()
-    await this.sendCommand(data)
+    try {
+      await this.sendCommand(data)
+      const responseBytes = await this.waitForResponse(RESPONSE_LENGTH_INFO)
+      const response = this.parseResponse(responseBytes)
+      return response
+    } finally {
+      release()
+    }
+  }
+
+  private waitForResponse(length: number): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const that = this
-      this.serialPort.once('readable', function () {
-        const responseBytes = that.readResponseBytes(RESPONSE_LENGTH_INFO)
-        if (responseBytes == null) {
-          release()
-          return reject('responseBytes are null.')
+      const timeout = setTimeout(() => {
+        cleanup()
+        reject(new Error('Timeout waiting for response'))
+      }, 2000)
+
+      const tryRead = () => {
+        const buffer = this.serialPort.read(length)
+        if (buffer) {
+          cleanup()
+          resolve(buffer)
         }
-        const response = that.parseResponse(responseBytes as Buffer)
-        release()
-        return resolve(response)
-      })
+      }
+
+      const cleanup = () => {
+        clearTimeout(timeout)
+        this.serialPort.removeListener('readable', tryRead)
+      }
+
+      this.serialPort.on('readable', tryRead)
+      tryRead()
     })
   }
 

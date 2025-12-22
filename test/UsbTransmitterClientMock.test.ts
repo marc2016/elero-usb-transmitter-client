@@ -35,7 +35,8 @@ describe('UsbTransmitterClient (Mocked)', () => {
             once: jest.fn(),
             read: jest.fn(),
             pipe: jest.fn(),
-            on: jest.fn()
+            on: jest.fn(),
+            removeListener: jest.fn()
         }
 
             // When new SerialPort() is called, return our mock instance
@@ -132,5 +133,50 @@ describe('UsbTransmitterClient (Mocked)', () => {
             ]),
             expect.any(Function)
         )
+    })
+    test('getInfo() should handle fragmented packets (reproduction fix)', async () => {
+        await client.open()
+
+        let readableCallback: Function | null = null;
+        mockSerialPortInstance.on.mockImplementation((event: string, cb: Function) => {
+            if (event === 'readable') {
+                readableCallback = cb
+            }
+        })
+
+        let readCallCount = 0
+        mockSerialPortInstance.read.mockImplementation((len: number) => {
+            readCallCount++
+            if (readCallCount === 1) {
+                return null // Not enough data yet
+            }
+            // Return dummy response buffer for getInfo call
+            const responseBuffer = Buffer.from([
+                BYTE_HEADER,
+                0x05,
+                EasyCommand.EASY_SEND,
+                0x00,
+                0x01,
+                InfoData.INFO_MOVING_DOWN,
+                0x00
+            ])
+            const sum = responseBuffer.slice(0, 6).reduce((a, b) => a + b, 0)
+            responseBuffer[6] = (256 - (sum % 256)) % 256
+            return responseBuffer
+        })
+
+        const infoPromise = client.getInfo(1)
+
+        // Wait a tick to ensure tryRead() ran once and failed
+        await new Promise(r => process.nextTick(r))
+
+        // Now trigger readable event again (simulation of second packet arriving)
+        if (readableCallback) {
+            (readableCallback as Function)()
+        }
+
+        const response = await infoPromise
+        expect(response.status).toBe(InfoData.INFO_MOVING_DOWN)
+        expect(readCallCount).toBeGreaterThanOrEqual(2)
     })
 })
