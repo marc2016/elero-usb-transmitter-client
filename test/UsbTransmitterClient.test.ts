@@ -7,14 +7,14 @@ const client = new UsbTransmitterClient('/dev/ttyUSB0')
 
 const aktiveChannelsForTest = [1, 2]
 
-test('checkChannels', async () => {
+test.skip('checkChannels', async () => {
   await client.open()
   const channels = await client.checkChannels()
   expect(channels).toEqual(aktiveChannelsForTest)
   await client.close()
 })
 
-test('getInfo', async () => {
+test.skip('getInfo', async () => {
   await client.open()
   const response = await client.getInfo(1)
   console.log(response)
@@ -22,7 +22,7 @@ test('getInfo', async () => {
   await client.close()
 })
 
-test('sendControlCommand', async () => {
+test.skip('sendControlCommand', async () => {
   await client.open()
   const response = await client.sendControlCommand(1, ControlCommand.down)
   console.log(response)
