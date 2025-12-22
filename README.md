@@ -19,6 +19,30 @@ Using npm:
 $ npm install elero-usb-transmitter-client
 ```
 
+## CLI Usage
+
+You can use the interactive CLI to control the transmitter directly.
+
+### Installation
+
+**Globally (if published to npm):**
+```bash
+npm install -g elero-usb-transmitter-client
+elero-cli
+```
+
+**Via npx (if published to npm):**
+```bash
+npx elero-usb-transmitter-client
+```
+
+**From Source (Development):**
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Link command: `npm link`
+5. Run: `elero-cli`
+
 ## Example
 
 ### Initialize
@@ -57,6 +81,38 @@ const response = await client.sendControlCommand(1, ControlCommand.down)
 console.log(response)
 await client.close()
 ```
+
+## Changelog
+
+### 1.1.1
+
+- Fixed `responseBytes are null` error by handling fragmented serial packets
+- Added detailed unit tests with mocks
+
+### 1.1.0
+
+- Added interactive CLI (`elero-cli`)
+- Added `inquirer` and `commander` dependencies
+
+### 1.0.6
+
+- Updated `serialport` dependency
+- Fixed errors in response handling
+
+### 1.0.5
+
+- Improved mutex handling (release added)
+
+### 1.0.4
+
+- Fixed promise rejection logic
+- Added null checks for response bytes
+
+### 1.0.0
+
+- Initial release with `getInfo`, `sendControlCommand`, and `checkChannels`
+- Implemented `UsbTransmitterClient`
+
 
 ## License
 

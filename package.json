@@ -1,6 +1,6 @@
 {
   "name": "elero-usb-transmitter-client",
-  "version": "1.0.5",
+  "version": "1.1.1",
   "description": "",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -20,16 +20,19 @@
   },
   "homepage": "https://github.com/marc2016/elero-usb-transmitter-client#readme",
   "devDependencies": {
+    "@types/inquirer": "^8.2.12",
     "@types/jest": "^24.0.25",
     "@types/lodash": "^4.14.149",
     "@types/node": "^13.1.5",
     "@types/serialport": "^8.0.1",
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
+    "commander": "^14.0.2",
     "eslint": "^6.8.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-prettier": "^3.1.2",
+    "inquirer": "^8.2.7",
     "jest": "^24.9.0",
     "prettier": "^2.0.2",
     "ts-jest": "^24.2.0",
@@ -38,6 +41,6 @@
   "dependencies": {
     "async-mutex": "^0.2.4",
     "lodash": "^4.17.15",
-    "serialport": "^9.0.1"
+    "serialport": "^13.0.0"
   }
 }
