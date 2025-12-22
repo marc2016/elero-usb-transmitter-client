@@ -84,6 +84,11 @@ await client.close()
 
 ## Changelog
 
+### 1.1.4
+
+- Added `prepublishOnly` script to ensure fresh build before publish
+- Explicitly added `dist` to `files` list in `package.json`
+
 ### 1.1.3
 
 - Moved `commander` and `inquirer` to `dependencies` (fix runtime error)
