@@ -18,6 +18,30 @@ Using npm:
 $ npm install elero-usb-transmitter-client
 ```
 
+## CLI Usage
+
+You can use the interactive CLI to control the transmitter directly.
+
+### Installation
+
+**Globally (if published to npm):**
+```bash
+npm install -g elero-usb-transmitter-client
+elero-cli
+```
+
+**Via npx (if published to npm):**
+```bash
+npx elero-usb-transmitter-client
+```
+
+**From Source (Development):**
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Link command: `npm link`
+5. Run: `elero-cli`
+
 ## Example
 
 ### Initialize
