@@ -5,10 +5,19 @@
     "declaration": true,
     "outDir": "./dist",
     "strict": true,
-    "lib": ["es2015"],
+    "lib": [
+      "es2015"
+    ],
     "resolveJsonModule": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "skipLibCheck": true
   },
-  "include": ["src", "__test__"],
-  "exclude": ["node_modules", "**/__tests__/*"]
+  "include": [
+    "src",
+    "__test__"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/*"
+  ]
 }

@@ -84,6 +84,12 @@ await client.close()
 
 ## Changelog
 
+### 1.2.0
+
+- Major update of dependencies (TypeScript 5.x, Jest 29.x, ESLint 9.x)
+- Switched to ESLint flat config (`eslint.config.mjs`)
+- Moved to `prettier` 3.x
+
 ### 1.1.4
 
 - Added `prepublishOnly` script to ensure fresh build before publish

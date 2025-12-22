@@ -1,5 +1,3 @@
-import { Dictionary } from './types'
-
 // Default serial connection details.
 export const DEFAULT_BAUDRATE = 38400
 export const DEFAULT_BYTESIZE = 8
@@ -49,4 +47,3 @@ export const INFO_BOTTOM_POS_STOP_WICH_INT_POS =
 export const INFO_SWITCHING_DEVICE_SWITCHED_OFF =
   'switching device switched off'
 export const INFO_SWITCHING_DEVICE_SWITCHED_ON = 'switching device switched on'
-
