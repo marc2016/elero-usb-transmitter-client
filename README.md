@@ -64,6 +64,26 @@ await client.close()
 - Added interactive CLI (`elero-cli`)
 - Added `inquirer` and `commander` dependencies
 
+### 1.0.6
+
+- Updated `serialport` dependency
+- Fixed errors in response handling
+
+### 1.0.5
+
+- Improved mutex handling (release added)
+
+### 1.0.4
+
+- Fixed promise rejection logic
+- Added null checks for response bytes
+
+### 1.0.0
+
+- Initial release with `getInfo`, `sendControlCommand`, and `checkChannels`
+- Implemented `UsbTransmitterClient`
+
+
 ## License
 
 [MIT](LICENSE)
