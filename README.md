@@ -57,6 +57,13 @@ console.log(response)
 await client.close()
 ```
 
+## Changelog
+
+### 1.1.0
+
+- Added interactive CLI (`elero-cli`)
+- Added `inquirer` and `commander` dependencies
+
 ## License
 
 [MIT](LICENSE)
