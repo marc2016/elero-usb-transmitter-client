@@ -82,6 +82,31 @@ console.log(response)
 await client.close()
 ```
 
+## Status Values
+
+The `status` property in the response object (from `getInfo` or `sendControlCommand`) returns one of the following values (defined in `InfoData` enum):
+
+| Value | Description |
+|---|---|
+| `-1` | Unknown |
+| `0x00` | No Information |
+| `0x01` | Top Position (Stop) |
+| `0x02` | Bottom Position (Stop) |
+| `0x03` | Intermediate Position (Stop) |
+| `0x04` | Tilt / Ventilation Position (Stop) |
+| `0x05` | Blocking |
+| `0x06` | Overheated |
+| `0x07` | Timeout |
+| `0x08` | Start to Move Up |
+| `0x09` | Start to Move Down |
+| `0x0a` | Moving Up |
+| `0x0b` | Moving Down |
+| `0x0d` | Stopped in Undefined Position |
+| `0x0e` | Top Position (Stop) with Tilt Position |
+| `0x0f` | Bottom Position (Stop) with Intermediate Position |
+| `0x10` | Switching Device Switched Off |
+| `0x11` | Switching Device Switched On |
+
 ## Changelog
 
 ### 1.2.0
