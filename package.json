@@ -2,8 +2,8 @@
   "name": "elero-usb-transmitter-client",
   "version": "1.2.1",
   "description": "",
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest --config jest.json",
     "lint": "eslint src/** test/**",
@@ -17,8 +17,8 @@
     "dist"
   ],
   "bin": {
-    "elero-usb-transmitter-client": "dist/src/cli.js",
-    "elero-cli": "dist/src/cli.js"
+    "elero-usb-transmitter-client": "dist/cli.js",
+    "elero-cli": "dist/cli.js"
   },
   "repository": {
     "type": "git",
