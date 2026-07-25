@@ -9,7 +9,7 @@ const program = new Command()
 let client: UsbTransmitterClient | null = null
 
 program
-  .version('1.0.0')
+  .version('1.2.1')
   .option('-p, --port <path>', 'Path to serial port')
   .parse(process.argv)
 
