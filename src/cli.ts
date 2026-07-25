@@ -4,12 +4,13 @@ import * as inquirer from 'inquirer'
 import { UsbTransmitterClient } from './UsbTransmitterClient'
 import { ControlCommand } from './domain/enums'
 import { SerialPort } from 'serialport'
+import { version } from '../package.json'
 
 const program = new Command()
 let client: UsbTransmitterClient | null = null
 
 program
-  .version('1.2.1')
+  .version(version)
   .option('-p, --port <path>', 'Path to serial port')
   .parse(process.argv)
 
