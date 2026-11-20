@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import * as inquirer from 'inquirer'
+import inquirer from 'inquirer'
 import { UsbTransmitterClient } from './UsbTransmitterClient'
 import { ControlCommand } from './domain/enums'
 import { SerialPort } from 'serialport'
@@ -35,7 +35,7 @@ async function main() {
 
     const answer = await inquirer.prompt([
       {
-        type: 'list',
+        type: 'select',
         name: 'port',
         message: 'Select Serial Port',
         choices: portChoices,
@@ -59,7 +59,7 @@ async function main() {
 async function mainMenu() {
   const answer = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'select',
       name: 'action',
       message: 'Main Menu',
       choices: [
@@ -118,7 +118,7 @@ async function selectChannel() {
 async function channelMenu(channel: number) {
   const answer = await inquirer.prompt([
     {
-      type: 'list',
+      type: 'select',
       name: 'action',
       message: `Channel ${channel} Actions`,
       choices: [

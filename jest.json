@@ -1,18 +1,13 @@
 {
-    "transform": {
-        "^.+\\.(t|j)sx?$": "ts-jest"
-    },
-    "testRegex": "(/test/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-    "testPathIgnorePatterns": [
-        "/node_modules/",
-        "/dist/"
-    ],
-    "moduleFileExtensions": [
-        "ts",
-        "tsx",
-        "js",
-        "jsx",
-        "json",
-        "node"
+  "transform": {
+    "^.+\\.(t|j)sx?$": [
+      "ts-jest",
+      {
+        "tsconfig": "tsconfig.test.json"
+      }
     ]
+  },
+  "testRegex": "(/test/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+  "testPathIgnorePatterns": ["/node_modules/", "/dist/"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"]
 }
