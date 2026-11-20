@@ -1,4 +1,7 @@
-export { UsbTransmitterClient } from './UsbTransmitterClient'
+export {
+  UsbTransmitterClient,
+  UsbTransmitterClientOptions,
+} from './UsbTransmitterClient'
 export { Response } from './model/Response'
 export * from './model/Response'
 export * from './domain/constants'

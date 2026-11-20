@@ -4,7 +4,9 @@ import * as inquirer from 'inquirer'
 import { UsbTransmitterClient } from './UsbTransmitterClient'
 import { ControlCommand } from './domain/enums'
 import { SerialPort } from 'serialport'
-import { version } from '../package.json'
+// Loaded at runtime so tsc keeps rootDir at ./src (dist/cli.js -> ../package.json)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { version } = require('../package.json') as { version: string }
 
 const program = new Command()
 let client: UsbTransmitterClient | null = null

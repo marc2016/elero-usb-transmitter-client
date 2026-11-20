@@ -4,6 +4,7 @@
     "module": "commonjs",
     "declaration": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
     "lib": [
       "es2015"
@@ -13,8 +14,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src",
-    "__test__"
+    "src"
   ],
   "exclude": [
     "node_modules",

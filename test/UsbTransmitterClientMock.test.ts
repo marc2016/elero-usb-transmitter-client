@@ -6,15 +6,37 @@ import { BYTE_HEADER } from '../src/domain/constants'
 // Mock entire serialport module
 jest.mock('serialport')
 
+function withChecksum(bytes: number[]): Buffer {
+  const sum = bytes.reduce((a, b) => a + b, 0)
+  return Buffer.from([...bytes, (256 - (sum % 256)) % 256])
+}
+
+function ackFrame(channel: number, status: InfoData): Buffer {
+  const mask = 1 << (channel - 1)
+  return withChecksum([
+    BYTE_HEADER,
+    0x05,
+    EasyCommand.EASY_ACK,
+    (mask >> 8) & 0xff,
+    mask & 0xff,
+    status,
+  ])
+}
+
 describe('UsbTransmitterClient (Mocked)', () => {
   let client: UsbTransmitterClient
   let mockSerialPortInstance: any
+  let handlers: Record<string, (...args: any[]) => void>
+  // Called after each write; lets a test decide what the "stick" answers.
+  let onWrite: (data: number[]) => void
+
+  const emitData = (buffer: Buffer) => handlers['data'](buffer)
 
   beforeEach(() => {
-    // Reset mocks
     jest.clearAllMocks()
+    handlers = {}
+    onWrite = () => undefined
 
-    // Setup mock instance
     mockSerialPortInstance = {
       isOpen: false,
       open: jest.fn((cb) => {
@@ -24,26 +46,32 @@ describe('UsbTransmitterClient (Mocked)', () => {
       close: jest.fn((cb) => {
         mockSerialPortInstance.isOpen = false
         if (cb) cb(null)
+        handlers['close']?.()
       }),
       write: jest.fn((data, cb) => {
         if (cb) cb(null)
       }),
+      drain: jest.fn((cb) => {
+        if (cb) cb(null)
+        // Answer asynchronously, like real hardware.
+        const calls = mockSerialPortInstance.write.mock.calls
+        const written = calls[calls.length - 1][0]
+        setImmediate(() => onWrite(written))
+      }),
       flush: jest.fn((cb) => {
         if (cb) cb(null)
       }),
-      once: jest.fn(),
-      read: jest.fn(),
-      pipe: jest.fn(),
-      on: jest.fn(),
-      removeListener: jest.fn(),
+      on: jest.fn((event: string, cb: any) => {
+        handlers[event] = cb
+      }),
     }
-
-    // When new SerialPort() is called, return our mock instance
     ;(SerialPort as unknown as jest.Mock).mockImplementation(
       () => mockSerialPortInstance,
     )
 
-    client = new UsbTransmitterClient('/dev/ttyMOCKED')
+    client = new UsbTransmitterClient('/dev/ttyMOCKED', {
+      responseTimeoutMs: 100,
+    })
   })
 
   test('open() should open the serial port', async () => {
@@ -52,82 +80,67 @@ describe('UsbTransmitterClient (Mocked)', () => {
     expect(mockSerialPortInstance.flush).toHaveBeenCalled()
   })
 
+  test('open() resolves when the port is already open', async () => {
+    await client.open()
+    await client.open()
+    expect(mockSerialPortInstance.open).toHaveBeenCalledTimes(1)
+  })
+
+  test('open() rejects without flushing when opening fails', async () => {
+    mockSerialPortInstance.open.mockImplementation((cb: any) =>
+      cb(new Error('busy')),
+    )
+    await expect(client.open()).rejects.toThrow('busy')
+    expect(mockSerialPortInstance.flush).not.toHaveBeenCalled()
+  })
+
   test('close() should close the serial port', async () => {
+    await client.open()
     await client.close()
     expect(mockSerialPortInstance.close).toHaveBeenCalled()
   })
 
-  test('checkChannels() calls correct command and parses response', async () => {
+  test('close() resolves when the port is not open', async () => {
+    await expect(client.close()).resolves.toBeUndefined()
+    expect(mockSerialPortInstance.close).not.toHaveBeenCalled()
+  })
+
+  test('commands reopen the port if it was closed', async () => {
+    onWrite = () => emitData(ackFrame(1, InfoData.INFO_TOP_POSITION_STOP))
+    const response = await client.getInfo(1)
+    expect(mockSerialPortInstance.open).toHaveBeenCalled()
+    expect(response.status).toBe(InfoData.INFO_TOP_POSITION_STOP)
+  })
+
+  test('checkChannels() sends correct command and parses response', async () => {
     await client.open()
-
-    // Simulate "readable" event and data read
-    mockSerialPortInstance.once.mockImplementation((event: string, cb: any) => {
-      if (event === 'readable') {
-        // Trigger the callback immediately to simulate data ready
-        cb()
-      }
-    })
-
-    // Mock response for check channels (Head, Len, Cmd, Byte3...CS)
-    // Response length check is 6 bytes.
-    // Byte 3 is bitmap of active channels (1-8). let's say ch 1 and 2 are active (binary 00000011 = 3)
-    const responseBuffer = Buffer.from([
-      BYTE_HEADER, // 0xAA
-      0x04, // Length
-      EasyCommand.EASY_CHECK,
-      0x00, // High channels (starts at 9)
-      0x03, // Low channels (starts at 1, so 1 & 2)
-      0x00, // Checksum (ignored for now in mock, or we calculate it if logic is strict)
-    ])
-    // Fix checksum if logic requires it: 256 - sum
-    const sum =
-      responseBuffer[0] +
-      responseBuffer[1] +
-      responseBuffer[2] +
-      responseBuffer[3] +
-      responseBuffer[4]
-    responseBuffer[5] = (256 - (sum % 256)) % 256
-
-    mockSerialPortInstance.read.mockReturnValue(responseBuffer)
+    onWrite = () =>
+      emitData(
+        withChecksum([
+          BYTE_HEADER,
+          0x04,
+          EasyCommand.EASY_CONFIRM,
+          0x00,
+          0x03, // channels 1 and 2
+        ]),
+      )
 
     const channels = await client.checkChannels()
-    expect(channels).toEqual(expect.arrayContaining([1, 2]))
+    expect(channels).toEqual([1, 2])
     expect(mockSerialPortInstance.write).toHaveBeenCalledWith(
-      expect.arrayContaining([BYTE_HEADER, 0x02, EasyCommand.EASY_CHECK]),
+      [BYTE_HEADER, 0x02, EasyCommand.EASY_CHECK, 0x0a],
       expect.any(Function),
     )
   })
 
   test('sendControlCommand() sends correct bytes', async () => {
     await client.open()
-
-    mockSerialPortInstance.once.mockImplementation((event: string, cb: any) => {
-      if (event === 'readable') cb()
-    })
-
-    // Response for Info (length 7)
-    // 0: AA, 1: 05, 2: EASY_SEND, 3: high, 4: low, 5: status, 6: CS
-    const responseBuffer = Buffer.from([
-      BYTE_HEADER,
-      0x05,
-      EasyCommand.EASY_SEND,
-      0x00,
-      0x01, // Channel 1 bit mask
-      InfoData.INFO_MOVING_DOWN,
-      0x00,
-    ])
-    const sum = responseBuffer.slice(0, 6).reduce((a, b) => a + b, 0)
-    responseBuffer[6] = (256 - (sum % 256)) % 256
-
-    mockSerialPortInstance.read.mockReturnValue(responseBuffer)
+    onWrite = () => emitData(ackFrame(1, InfoData.INFO_MOVING_DOWN))
 
     const response = await client.sendControlCommand(1, ControlCommand.down)
 
     expect(response.status).toBe(InfoData.INFO_MOVING_DOWN)
-
-    // Verify write arguments
-    // Data: [AA, 05, EASY_SEND, high, low, cmd, CS]
-    // Channel 1 -> low=1, high=0
+    expect(response.activeChannels).toEqual([1])
     expect(mockSerialPortInstance.write).toHaveBeenCalledWith(
       expect.arrayContaining([
         BYTE_HEADER,
@@ -140,49 +153,76 @@ describe('UsbTransmitterClient (Mocked)', () => {
       expect.any(Function),
     )
   })
-  test('getInfo() should handle fragmented packets (reproduction fix)', async () => {
+
+  test('assembles a response split over several chunks', async () => {
     await client.open()
-
-    let readableCallback: any | null = null
-    mockSerialPortInstance.on.mockImplementation((event: string, cb: any) => {
-      if (event === 'readable') {
-        readableCallback = cb
-      }
-    })
-
-    let readCallCount = 0
-    mockSerialPortInstance.read.mockImplementation(() => {
-      readCallCount++
-      if (readCallCount === 1) {
-        return null // Not enough data yet
-      }
-      // Return dummy response buffer for getInfo call
-      const responseBuffer = Buffer.from([
-        BYTE_HEADER,
-        0x05,
-        EasyCommand.EASY_SEND,
-        0x00,
-        0x01,
-        InfoData.INFO_MOVING_DOWN,
-        0x00,
-      ])
-      const sum = responseBuffer.slice(0, 6).reduce((a, b) => a + b, 0)
-      responseBuffer[6] = (256 - (sum % 256)) % 256
-      return responseBuffer
-    })
-
-    const infoPromise = client.getInfo(1)
-
-    // Wait a tick to ensure tryRead() ran once and failed
-    await new Promise((r) => process.nextTick(r))
-
-    // Now trigger readable event again (simulation of second packet arriving)
-    if (readableCallback) {
-      readableCallback()
+    const frame = ackFrame(2, InfoData.INFO_MOVING_UP)
+    onWrite = () => {
+      emitData(frame.subarray(0, 2))
+      setImmediate(() => emitData(frame.subarray(2, 5)))
+      setTimeout(() => emitData(frame.subarray(5)), 10)
     }
 
-    const response = await infoPromise
+    const response = await client.getInfo(2)
+    expect(response.status).toBe(InfoData.INFO_MOVING_UP)
+  })
+
+  test('ignores a late response from a previous timed-out command', async () => {
+    await client.open()
+
+    // First command: the stick does not answer in time.
+    await expect(client.getInfo(1)).rejects.toThrow(
+      'Timeout waiting for response',
+    )
+    // ...then the late answer arrives.
+    emitData(ackFrame(1, InfoData.INFO_BOTTOM_POSITION_STOP))
+
+    onWrite = () => emitData(ackFrame(2, InfoData.INFO_TOP_POSITION_STOP))
+    const response = await client.getInfo(2)
+    expect(response.activeChannels).toEqual([2])
+    expect(response.status).toBe(InfoData.INFO_TOP_POSITION_STOP)
+  })
+
+  test('skips garbage, corrupt frames and frames for other channels', async () => {
+    await client.open()
+    const corrupt = Buffer.from(ackFrame(1, InfoData.INFO_MOVING_DOWN))
+    corrupt[6] ^= 0xff
+    onWrite = () =>
+      emitData(
+        Buffer.concat([
+          Buffer.from([0x00, 0x13, 0x37]),
+          corrupt,
+          ackFrame(2, InfoData.INFO_MOVING_UP),
+          ackFrame(1, InfoData.INFO_MOVING_DOWN),
+        ]),
+      )
+
+    const response = await client.sendControlCommand(1, ControlCommand.down)
+    expect(response.activeChannels).toEqual([1])
     expect(response.status).toBe(InfoData.INFO_MOVING_DOWN)
-    expect(readCallCount).toBeGreaterThanOrEqual(2)
+  })
+
+  test('rejects with timeout when the stick does not answer', async () => {
+    await client.open()
+    await expect(client.getInfo(1)).rejects.toThrow(
+      'Timeout waiting for response',
+    )
+  })
+
+  test('rejects when the write fails', async () => {
+    await client.open()
+    mockSerialPortInstance.write.mockImplementation((_d: any, cb: any) =>
+      cb(new Error('Port is not open')),
+    )
+    await expect(
+      client.sendControlCommand(1, ControlCommand.up),
+    ).rejects.toThrow('Port is not open')
+  })
+
+  test('rejects a pending request when the port closes', async () => {
+    await client.open()
+    const pending = client.getInfo(1)
+    setImmediate(() => mockSerialPortInstance.close())
+    await expect(pending).rejects.toThrow('Serial port closed')
   })
 })
